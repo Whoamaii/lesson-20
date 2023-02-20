@@ -1,3 +1,7 @@
 .mr {
   margin-top: 20px;
 }
+
+.commentsBtn {
+  display: none;
+}

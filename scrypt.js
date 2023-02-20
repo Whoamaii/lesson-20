@@ -1,55 +1,73 @@
-const btn = document.querySelector("button");
-const input = document.querySelector("input");
-const div = document.querySelector(".body");
-const userNumber = document.querySelector(".user");
-const text = document.querySelector(".titleText");
+const loadPostBtn = document.querySelector("button");
+const postIdInput = document.querySelector("input");
+const postContentDiv = document.querySelector(".body");
 const postId = document.querySelector(".postid");
-const comments = document.querySelector(".comments");
-const regNumb = /^[1-9]$|^[1-9][0-9]$|^(100)$/gm;
+const postTitleDiv = document.querySelector(".titleText");
+const postUserIdDiv = document.querySelector(".user");
+const postCommentsBtn = document.querySelector(".commentsBtn");
+const postCommentsDiv = document.querySelector(".comments");
 
-btn.addEventListener("click", (event) => {
-  if (regNumb.test(input.value)) {
-    const comBtn = document.createElement("button");
-    comBtn.textContent = "Comments";
-    comments.appendChild(comBtn);
-    fetch("https://jsonplaceholder.typicode.com/posts/" + input.value)
-      .then((response) => response.json())
-      .then((data) => {
-        (userNumber.textContent = "User-id:" + data.userId),
-          (div.textContent = "Body: " + data.body),
-          (text.textContent = "Title: " + data.title),
-          (postId.textContent = "Post-id: " + data.id);
-      })
-      .catch((err) => alert(err));
+let commentsLoaded = false;
 
-    comBtn.addEventListener("click", (action) => {
-      fetch(
-        "https://jsonplaceholder.typicode.com/posts/" +
-          input.value +
-          "/comments"
-      )
-        .then((response) => response.json())
-        .then((item) => {
-          item.forEach((element) => {
-            const comPostId = document.createElement("div");
-            const comId = document.createElement("div");
-            const comName = document.createElement("div");
-            const comEmail = document.createElement("div");
-            const comBody = document.createElement("div");
-            comments.appendChild(comPostId);
-            comments.appendChild(comId);
-            comments.appendChild(comName);
-            comments.appendChild(comEmail);
-            comments.appendChild(comBody);
-            comPostId.textContent = "Post-id: " + element.postId;
-            comId.textContent = "User-id:" + element.id;
-            comName.textContent = "Name: " + element.name;
-            comEmail.textContent = "Email: " + element.email;
-            comBody.textContent = "Body: " + element.body;
-            comPostId.classList.add("mr");
-          });
-        })
-        .catch((err) => alert(err));
-    });
+loadPostBtn.addEventListener("click", () => {
+  const postId = postIdInput.value;
+  if (!postId) {
+    alert("Please enter a post ID!");
+    return;
   }
+  loadPost(postId)
+    .then(() => {
+      if (!commentsLoaded) {
+        postCommentsBtn.style.display = "block";
+      }
+    })
+    .catch((error) => {
+      alert(`Error loading post: ${error}`);
+    });
 });
+
+postCommentsBtn.addEventListener("click", () => {
+  const postId = postIdInput.value;
+
+  if (!postId) {
+    alert("Please enter a post ID!");
+    return;
+  }
+  if (commentsLoaded) {
+    return;
+  }
+  loadComments(postId)
+    .then(() => {
+      commentsLoaded = true;
+    })
+    .catch((error) => {
+      alert(`Error loading comments: ${error}`);
+    });
+});
+
+function loadPost(id) {
+  return fetch(`https://jsonplaceholder.typicode.com/posts/${id}`)
+    .then((response) => response.json())
+    .then((data) => {
+      postContentDiv.textContent = `Body: ${data.body}`;
+      postTitleDiv.textContent = `Title: ${data.title}`;
+      postUserIdDiv.textContent = `User-id: ${data.userId}`;
+      postId.textContent = `Post-id: ${data.id}`;
+    });
+}
+
+function loadComments(postId) {
+  postId = postIdInput.value;
+
+  return fetch(`https://jsonplaceholder.typicode.com/posts/${postId}/comments`)
+    .then((response) => response.json())
+    .then((data) => {
+      data.forEach((comment) => {
+        const commentDiv = document.createElement("div");
+        commentDiv.textContent = `${comment.email}: ${comment.body}`;
+        postCommentsDiv.appendChild(commentDiv);
+        postCommentsDiv.classList.add("mr");
+        commentDiv.classList.add("mr");
+      });
+    });
+}
